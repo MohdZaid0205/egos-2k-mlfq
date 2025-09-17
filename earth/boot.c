@@ -18,7 +18,6 @@ struct earth* earth = (void*)EARTH_STRUCT_BASE;
 
 void hang();
 void grass_entry();
-void core_set_idle(uint core);
 
 void boot() {
     uint core_id, vendor_id;

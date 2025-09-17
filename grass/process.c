@@ -6,37 +6,42 @@
  */
 
 #include "process.h"
+#include <stdlib.h>
 
 #define MLFQ_NLEVELS          5
 #define MLFQ_RESET_PERIOD     10000000         /* 10 seconds */
 #define MLFQ_LEVEL_RUNTIME(x) (x + 1) * 100000 /* e.g., 100ms for level 0 */
-extern struct process proc_set[MAX_NPROCESS + 1];
+
+extern SLIST_HEAD(PCB, process) runnable;
+extern struct process* running_proc[NCORES + 1];
 
 static void proc_set_status(int pid, enum proc_status status) {
-    for (uint i = 0; i < MAX_NPROCESS; i++)
-        if (proc_set[i].pid == pid) proc_set[i].status = status;
+    for (uint i = 0; i <= NCORES; i++)
+        if (running_proc[i] && running_proc[i]->pid == pid)
+            running_proc[i]->status = status;
+    struct process* p;
+    SLIST_FOREACH(p, &runnable, next) if (p->pid == pid) p->status = status;
 }
 
 void proc_set_ready(int pid) { proc_set_status(pid, PROC_READY); }
-void proc_set_running(int pid) { proc_set_status(pid, PROC_RUNNING); }
 void proc_set_runnable(int pid) { proc_set_status(pid, PROC_RUNNABLE); }
-void proc_set_pending(int pid) { proc_set_status(pid, PROC_PENDING_SYSCALL); }
 
 int proc_alloc() {
+    struct process* p    = malloc(sizeof(struct process));
     static uint curr_pid = 0;
-    for (uint i = 0; i < MAX_NPROCESS; i++)
-        if (proc_set[i].status == PROC_UNUSED) {
-            proc_set[i].pid    = ++curr_pid;
-            proc_set[i].status = PROC_LOADING;
-            /* Student's code goes here (Preemptive Scheduler | System Call). */
+    p->pid               = ++curr_pid;
 
-            /* Initialization of lifecycle statistics, MLFQ or process sleep. */
+    if (curr_pid == GPID_PROCESS) {
+        uint core;
+        asm("csrr %0, mhartid" : "=r"(core));
+        running_proc[core]         = p;
+        running_proc[core]->status = PROC_RUNNING;
+    } else {
+        p->status = PROC_LOADING;
+        SLIST_INSERT_HEAD(&runnable, p, next);
+    }
 
-            /* Student's code ends here. */
-            return curr_pid;
-        }
-
-    FATAL("proc_alloc: reach the limit of %d processes", MAX_NPROCESS);
+    return curr_pid;
 }
 
 void proc_free(int pid) {
@@ -45,15 +50,12 @@ void proc_free(int pid) {
     /* Print the lifecycle statistics of the terminated process or processes. */
     if (pid != GPID_ALL) {
         earth->mmu_free(pid);
-        proc_set_status(pid, PROC_UNUSED);
-    } else {
-        /* Free all user processes. */
-        for (uint i = 0; i < MAX_NPROCESS; i++)
-            if (proc_set[i].pid >= GPID_USER_START &&
-                proc_set[i].status != PROC_UNUSED) {
-                earth->mmu_free(proc_set[i].pid);
-                proc_set[i].status = PROC_UNUSED;
-            }
+        struct process* p;
+        SLIST_FOREACH(p, &runnable, next)
+        if (p->pid == pid) {
+            SLIST_REMOVE(&runnable, p, process, next);
+            free(p);
+        }
     }
     /* Student's code ends here. */
 }
@@ -88,7 +90,6 @@ void proc_sleep(int pid, uint usec) {
 }
 
 void proc_coresinfo() {
-    extern uint core_to_proc_idx[NCORES + 1];
     /* Student's code goes here (Multicore & Locks). */
 
     /* Print out the pid of the process running on each CPU core. */

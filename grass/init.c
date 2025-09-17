@@ -29,9 +29,8 @@ void grass_entry() {
     /* Student's code ends here. */
 
     /* Load GPID_PROCESS. */
-    INFO("Load kernel process #%d: sys_process", GPID_PROCESS);
+    INFO("Load kernel process #%d: sys_process", proc_alloc());
     elf_load(GPID_PROCESS, sys_proc_read, 0, 0);
-    proc_set_running(proc_alloc());
     earth->mmu_switch(GPID_PROCESS);
     earth->mmu_flush_cache();
 
