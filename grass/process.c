@@ -95,6 +95,7 @@ void mlfq_reset_level() {
     static ulonglong MLFQ_last_reset_time = 0;
     for (int i = 0; i < MAX_NPROCESS+1; i++){
         proc_set[i].mlfq_priority = 0;
+        proc_set[i].remaining_time= MLFQ_LEVEL_RUNTIME(0);
         INFO("[PID]=%d PRIORITY VOLUNTARY swith=%d\n",
              proc_set[i].pid, proc_set[i].mlfq_priority);
     }

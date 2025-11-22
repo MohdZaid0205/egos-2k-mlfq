@@ -90,17 +90,23 @@ static void proc_yield() {
      * Modify the loop below to find the next process to schedule with MLFQ.
      * [System Call & Protection]
      * Do not schedule a process that should still be sleeping at this time. */
+    
+    // NOTE in apps/system/sys_proc.c int (app_spawn)(...) any process gets
+    //      allocated using our defined proc_alloc() and then status is set
+    //      to proc_set_ready => PROC_READY :. we check if process is ready
+    //      in that case (in what i have implemented) is considerd as first
+    //      time a process gets time to execute. for RESPONSE TIME i guess.
 
-    int next_idx = MAX_NPROCESS;
-    for (uint i = 1; i <= MAX_NPROCESS; i++) {
-        struct process* p = &proc_set[(curr_proc_idx + i) % MAX_NPROCESS];
-        if (p->status == PROC_PENDING_SYSCALL) proc_try_syscall(p);
-
-        if (p->status == PROC_READY || p->status == PROC_RUNNABLE) {
-            next_idx = (curr_proc_idx + i) % MAX_NPROCESS;
-            break;
-        }
-    }
+    // int next_idx = MAX_NPROCESS;
+    // for (uint i = 1; i <= MAX_NPROCESS; i++) {
+    //    struct process* p = &proc_set[(curr_proc_idx + i) % MAX_NPROCESS];
+    //    if (p->status == PROC_PENDING_SYSCALL) proc_try_syscall(p);
+    //
+    //    if (p->status == PROC_READY || p->status == PROC_RUNNABLE) {
+    //        next_idx = (curr_proc_idx + i) % MAX_NPROCESS;
+    //        break;
+    //    }
+    // }
 
     if (next_idx < MAX_NPROCESS) {
         /* [Preemptive Scheduler]
