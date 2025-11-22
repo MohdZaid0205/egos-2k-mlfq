@@ -106,7 +106,7 @@ void mlfq_reset_level() {
     MLFQ_last_reset_time = mtime_get();
     for (int i = 0; i < MAX_NPROCESS+1; i++){
         if (proc_set[i].status == PROC_UNUSED) continue;
-        proc_set[i].mlfq_priority = 0;
+        proc_set[i].mlfq_priority = 0; proc_set[i].lnum++;
         proc_set[i].remaining_time= MLFQ_LEVEL_RUNTIME(0);
         // INFO("[PID]=%d PRIORITY VOLUNTARY swith=%d",
         //     proc_set[i].pid, proc_set[i].mlfq_priority);
