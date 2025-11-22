@@ -29,6 +29,8 @@ int proc_alloc() {
             proc_set[i].pid    = ++curr_pid;
             proc_set[i].status = PROC_LOADING;
             /* Student's code goes here (Preemptive Scheduler | System Call). */
+            proc_set[i].nint = 0;
+
             proc_set[i].turn_time = mtime_get();
             proc_set[i].resp_time = mtime_get();
             proc_set[i].acpu_time = 0;
@@ -48,7 +50,8 @@ void proc_free(int pid) {
     for (int i = 0; i < MAX_NPROCESS+1; i++)
         if (proc_set[i].pid == pid){
             proc_set[i].turn_time = mtime_get() - proc_set[i].turn_time;
-            printf("[PID]=%d turn=%dms resp=%dms acpu=%dms\n", proc_set[i].pid, 
+            printf("[PID]=%d nint=%d turn=%dms resp=%dms acpu=%dms\n", 
+                   proc_set[i].pid, proc_set[i].nint,
                    (int)(proc_set[i].turn_time/1000),
                    (int)(proc_set[i].resp_time/1000),
                    (int)(proc_set[i].acpu_time/1000)

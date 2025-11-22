@@ -73,6 +73,8 @@ static void intr_entry(uint id) {
     /* Student's code goes here (Preemptive Scheduler). */
 
     /* Update the process lifecycle statistics. */
+    proc_set[curr_proc_idx].nint += 
+        (curr_status == PROC_RUNNING) ? 1 : 0;
 
     /* Student's code ends here. */
     proc_yield();
