@@ -74,9 +74,10 @@ static void intr_entry(uint id) {
     /* Student's code goes here (Preemptive Scheduler). */
 
     /* Update the process lifecycle statistics. */
-    proc_set[curr_proc_idx].nint += 
-        (curr_status == PROC_RUNNING) ? 1 : 0;
-
+    if (proc_set[curr_proc_idx].status == PROC_RUNNING){
+        proc_set[curr_proc_idx].nint += 1;
+        // INFO("%d", curr_proc_idx);
+    }
     /* Student's code ends here. */
     proc_yield();
 }
@@ -92,7 +93,11 @@ static void proc_yield() {
      * [System Call & Protection]
      * Do not schedule a process that should still be sleeping at this time. */
     
-    mlfq_update_level(&proc_set[curr_proc_idx], mtime_get());
+    mlfq_update_level(&proc_set[curr_proc_idx],
+                mtime_get() - proc_set[curr_proc_idx].prev_time);
+
+    mlfq_reset_level(); 
+    proc_set[curr_proc_idx].bint += 1;
 
     // NOTE in apps/system/sys_proc.c int (app_spawn)(...) any process gets
     //      allocated using our defined proc_alloc() and then status is set
@@ -144,6 +149,12 @@ static void proc_yield() {
          * [System Call & Protection | Multicore & Locks]
          * Modify mstatus.MPP to enter machine or user mode after mret. */
 
+        proc_set[next_idx].prev_time = mtime_get();
+        proc_set[next_idx].resp_time = 
+            (proc_set[next_idx].status == PROC_READY) ?
+            mtime_get() - proc_set[next_idx].resp_time: 
+                          proc_set[next_idx].resp_time;
+        proc_set[next_idx].prem += 1;
     } else {
         /* [Multicore & Locks]
          * Release the kernel lock.

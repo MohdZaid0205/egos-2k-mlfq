@@ -24,6 +24,8 @@ struct process {
     uint mepc, saved_registers[SAVED_REGISTER_NUM];
     /* Student's code goes here (Preemptive Scheduler | System Call). */
     uint nint;
+    uint bint;
+    uint prem;
 
     ulonglong turn_time;
     ulonglong resp_time;

@@ -11,6 +11,7 @@
 #define MLFQ_RESET_PERIOD     10000000         /* 10 seconds */
 #define MLFQ_LEVEL_RUNTIME(x) (x + 1) * 100000 /* e.g., 100ms for level 0 */
 extern struct process proc_set[MAX_NPROCESS + 1];
+ulonglong MLFQ_last_reset_time = 0;
 
 static void proc_set_status(int pid, enum proc_status status) {
     for (uint i = 0; i < MAX_NPROCESS; i++)
@@ -29,7 +30,9 @@ int proc_alloc() {
             proc_set[i].pid    = ++curr_pid;
             proc_set[i].status = PROC_LOADING;
             /* Student's code goes here (Preemptive Scheduler | System Call). */
-            proc_set[i].nint = 0;
+            proc_set[i].nint = 0;   // number of interrupts due to TIMER
+            proc_set[i].bint = 0;   // number of interrupts due to SYSCALL
+            proc_set[i].prem = 0;   // preemptive starts
 
             proc_set[i].turn_time = mtime_get();
             proc_set[i].resp_time = mtime_get();
@@ -51,8 +54,10 @@ void proc_free(int pid) {
     for (int i = 0; i < MAX_NPROCESS+1; i++)
         if (proc_set[i].pid == pid){
             proc_set[i].turn_time = mtime_get() - proc_set[i].turn_time;
-            printf("[PID]=%d nint=%d turn=%dms resp=%dms acpu=%dms\n", 
+            printf("[PID]=%d nint=%d bint=%d prem=%d turn=%dms resp=%dms acpu=%dms\n", 
                    proc_set[i].pid, proc_set[i].nint,
+                   proc_set[i].bint-proc_set[i].nint,
+                   proc_set[i].prem,
                    (int)(proc_set[i].turn_time/1000),
                    (int)(proc_set[i].resp_time/1000),
                    (int)(proc_set[i].acpu_time/1000)
@@ -78,10 +83,12 @@ void proc_free(int pid) {
 void mlfq_update_level(struct process* p, ulonglong runtime) {
     /* Student's code goes here (Preemptive Scheduler). */
     p->acpu_time += runtime;
-    if ((p->remaining_time -= runtime <= 0) && p->mlfq_priority < MLFQ_NLEVELS-1){
+    p->remaining_time -= runtime;
+    if ((p->remaining_time <= 0) && p->mlfq_priority < MLFQ_NLEVELS-1){
         p->mlfq_priority += 1;
         p->remaining_time = MLFQ_LEVEL_RUNTIME(p->mlfq_priority);
-        INFO("[PID]=%d PRIORITY chaged to LEVEL=%d\n", p->pid, p->mlfq_priority);
+        // INFO("[PID]=%d PRIORITY chaged to LEVEL=%d", 
+        //              p->pid, p->mlfq_priority);
     }
     /* Student's code ends here. */
 }
@@ -92,12 +99,16 @@ void mlfq_reset_level() {
         /* Reset the level of GPID_SHELL if there is pending keyboard input. */
     }
 
-    static ulonglong MLFQ_last_reset_time = 0;
+    if (mtime_get() - MLFQ_last_reset_time < MLFQ_RESET_PERIOD)
+        return;
+
+    MLFQ_last_reset_time = mtime_get();
     for (int i = 0; i < MAX_NPROCESS+1; i++){
+        if (proc_set[i].status == PROC_UNUSED) continue;
         proc_set[i].mlfq_priority = 0;
         proc_set[i].remaining_time= MLFQ_LEVEL_RUNTIME(0);
-        INFO("[PID]=%d PRIORITY VOLUNTARY swith=%d\n",
-             proc_set[i].pid, proc_set[i].mlfq_priority);
+        // INFO("[PID]=%d PRIORITY VOLUNTARY swith=%d",
+        //     proc_set[i].pid, proc_set[i].mlfq_priority);
     }
     /* Student's code ends here. */
 }
