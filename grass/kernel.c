@@ -40,6 +40,7 @@ void kernel_entry() {
     memcpy(SAVED_REGISTER_ADDR, curr_saved, SAVED_REGISTER_SIZE);
 }
 
+#define MLFQ_NLEVELS    5
 #define INTR_ID_TIMER   7
 #define EXCP_ID_ECALL_U 8
 #define EXCP_ID_ECALL_M 11
@@ -91,12 +92,34 @@ static void proc_yield() {
      * [System Call & Protection]
      * Do not schedule a process that should still be sleeping at this time. */
     
+    mlfq_update_level(&proc_set[curr_proc_idx], mtime_get());
+
     // NOTE in apps/system/sys_proc.c int (app_spawn)(...) any process gets
     //      allocated using our defined proc_alloc() and then status is set
     //      to proc_set_ready => PROC_READY :. we check if process is ready
     //      in that case (in what i have implemented) is considerd as first
     //      time a process gets time to execute. for RESPONSE TIME i guess.
 
+    int next_idx = MAX_NPROCESS;
+    int priority = MLFQ_NLEVELS;
+    int recently = 0x00EFFFFFFF;
+    
+    for (uint i = 1; i <= MAX_NPROCESS; i++){
+        struct process* p = &proc_set[i];
+        if (p->status == PROC_PENDING_SYSCALL) proc_try_syscall(p);
+
+        if (p->status == PROC_READY || p->status == PROC_RUNNABLE){
+            if ((p->mlfq_priority < priority) ||
+                (p->mlfq_priority == priority && p->prev_time < recently)
+            ){
+                next_idx = i;
+                priority = p->mlfq_priority;
+                recently = p->prev_time;
+            }
+        }
+    }
+    
+    // default implementation [BEFORE MLFQ IMPLEMENTATION]
     // int next_idx = MAX_NPROCESS;
     // for (uint i = 1; i <= MAX_NPROCESS; i++) {
     //    struct process* p = &proc_set[(curr_proc_idx + i) % MAX_NPROCESS];
@@ -125,6 +148,7 @@ static void proc_yield() {
         FATAL("proc_yield: no process to run on core %d", core_in_kernel);
     }
     /* Student's code ends here. */
+    INFO("found index=%d\n", next_idx);
 
     curr_proc_idx = next_idx;
     earth->mmu_switch(curr_pid);

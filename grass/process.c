@@ -78,7 +78,7 @@ void proc_free(int pid) {
 void mlfq_update_level(struct process* p, ulonglong runtime) {
     /* Student's code goes here (Preemptive Scheduler). */
     p->acpu_time += runtime;
-    if (p->remaining_time -= runtime <= 0 && p->mlfq_priority < MLFQ_NLEVELS-1){
+    if ((p->remaining_time -= runtime <= 0) && p->mlfq_priority < MLFQ_NLEVELS-1){
         p->mlfq_priority += 1;
         p->remaining_time = MLFQ_LEVEL_RUNTIME(p->mlfq_priority);
         INFO("[PID]=%d PRIORITY chaged to LEVEL=%d\n", p->pid, p->mlfq_priority);
