@@ -33,6 +33,7 @@ int proc_alloc() {
             proc_set[i].nint = 0;   // number of interrupts due to TIMER
             proc_set[i].bint = 0;   // number of interrupts due to SYSCALL
             proc_set[i].prem = 0;   // preemptive starts
+            proc_set[i].lnum = 0;   // number of level changes in MLFQ
 
             proc_set[i].turn_time = mtime_get();
             proc_set[i].resp_time = mtime_get();
@@ -54,10 +55,10 @@ void proc_free(int pid) {
     for (int i = 0; i < MAX_NPROCESS+1; i++)
         if (proc_set[i].pid == pid){
             proc_set[i].turn_time = mtime_get() - proc_set[i].turn_time;
-            printf("[PID]=%d nint=%d bint=%d prem=%d turn=%dms resp=%dms acpu=%dms\n", 
+            printf("[PID]=%d nint=%d bint=%d prem=%d lnum=%d turn=%dms resp=%dms acpu=%dms\n", 
                    proc_set[i].pid, proc_set[i].nint,
                    proc_set[i].bint-proc_set[i].nint,
-                   proc_set[i].prem,
+                   proc_set[i].prem,proc_set[i].lnum,
                    (int)(proc_set[i].turn_time/1000),
                    (int)(proc_set[i].resp_time/1000),
                    (int)(proc_set[i].acpu_time/1000)
@@ -85,7 +86,7 @@ void mlfq_update_level(struct process* p, ulonglong runtime) {
     p->acpu_time += runtime;
     p->remaining_time -= runtime;
     if ((p->remaining_time <= 0) && p->mlfq_priority < MLFQ_NLEVELS-1){
-        p->mlfq_priority += 1;
+        p->mlfq_priority += 1; p->lnum += 1;
         p->remaining_time = MLFQ_LEVEL_RUNTIME(p->mlfq_priority);
         // INFO("[PID]=%d PRIORITY chaged to LEVEL=%d", 
         //              p->pid, p->mlfq_priority);

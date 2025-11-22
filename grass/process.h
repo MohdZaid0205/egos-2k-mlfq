@@ -26,6 +26,7 @@ struct process {
     uint nint;
     uint bint;
     uint prem;
+    uint lnum;
 
     ulonglong turn_time;
     ulonglong resp_time;
