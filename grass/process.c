@@ -33,6 +33,7 @@ int proc_alloc() {
 
             proc_set[i].turn_time = mtime_get();
             proc_set[i].resp_time = mtime_get();
+            proc_set[i].prev_time = mtime_get();
             proc_set[i].acpu_time = 0;
 
             proc_set[i].mlfq_priority = 0;
