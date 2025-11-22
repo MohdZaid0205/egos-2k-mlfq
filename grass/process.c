@@ -29,8 +29,8 @@ int proc_alloc() {
             proc_set[i].pid    = ++curr_pid;
             proc_set[i].status = PROC_LOADING;
             /* Student's code goes here (Preemptive Scheduler | System Call). */
-            proc_set[i].turn_time = 0;
-            proc_set[i].resp_time = 0;
+            proc_set[i].turn_time = mtime_get();
+            proc_set[i].resp_time = mtime_get();
             proc_set[i].acpu_time = 0;
 
             proc_set[i].mlfq_priority = 0;
@@ -45,11 +45,13 @@ int proc_alloc() {
 void proc_free(int pid) {
     /* Student's code goes here (Preemptive Scheduler). */
     
-    for (int i = 0; i < MAX_NPROCESS; i++)
+    for (int i = 0; i < MAX_NPROCESS+1; i++)
         if (proc_set[i].pid == pid){
-            printf("[PID]=%d turn=%d resp=%d acpu=%d\n",
-                   proc_set[i].pid      , proc_set[i].turn_time,
-                   proc_set[i].resp_time, proc_set[i].acpu_time
+            proc_set[i].turn_time = mtime_get() - proc_set[i].turn_time;
+            printf("[PID]=%d turn=%dms resp=%dms acpu=%dms\n", proc_set[i].pid, 
+                   (int)(proc_set[i].turn_time/1000),
+                   (int)(proc_set[i].resp_time/1000),
+                   (int)(proc_set[i].acpu_time/1000)
             );
         }
 
@@ -71,10 +73,12 @@ void proc_free(int pid) {
 
 void mlfq_update_level(struct process* p, ulonglong runtime) {
     /* Student's code goes here (Preemptive Scheduler). */
-
-    /* Update the MLFQ-related fields in struct process* p after this
-     * process has run on the CPU for another runtime microseconds. */
-
+    p->acpu_time += runtime;
+    if (p->remaining_time -= runtime <= 0 && p->mlfq_priority < MLFQ_NLEVELS-1){
+        p->mlfq_priority += 1;
+        p->remaining_time = MLFQ_LEVEL_RUNTIME(p->mlfq_priority);
+        INFO("[PID]=%d PRIORITY chaged to LEVEL=%d\n", p->pid, p->mlfq_priority);
+    }
     /* Student's code ends here. */
 }
 
@@ -85,8 +89,11 @@ void mlfq_reset_level() {
     }
 
     static ulonglong MLFQ_last_reset_time = 0;
-    /* Reset the level of all processes every MLFQ_RESET_PERIOD microseconds. */
-
+    for (int i = 0; i < MAX_NPROCESS+1; i++){
+        proc_set[i].mlfq_priority = 0;
+        INFO("[PID]=%d PRIORITY VOLUNTARY swith=%d\n",
+             proc_set[i].pid, proc_set[i].mlfq_priority);
+    }
     /* Student's code ends here. */
 }
 

@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
                 // printf("find:%s inside:%s\n", compares, sequence);
                 
                 int last_found = 0;
-                for (int s=0; s<seq_size-com_size; s++){
+                for (int s=0; s<seq_size-com_size+1; s++){
                     if (strncmp(compares, sequence+s, com_size)==0){
                         sequence[s] = 0; is_there = 1;
                         printf("%s\033[38;2;255;50;50m%s\033[0m",
