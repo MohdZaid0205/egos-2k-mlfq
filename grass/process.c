@@ -44,6 +44,14 @@ int proc_alloc() {
 
 void proc_free(int pid) {
     /* Student's code goes here (Preemptive Scheduler). */
+    
+    for (int i = 0; i < MAX_NPROCESS; i++)
+        if (proc_set[i].pid == pid){
+            printf("[PID]=%d turn=%d resp=%d acpu=%d\n",
+                   proc_set[i].pid      , proc_set[i].turn_time,
+                   proc_set[i].resp_time, proc_set[i].acpu_time
+            );
+        }
 
     /* Print the lifecycle statistics of the terminated process or processes. */
     if (pid != GPID_ALL) {
