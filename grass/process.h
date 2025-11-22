@@ -23,9 +23,13 @@ struct process {
     enum proc_status status;
     uint mepc, saved_registers[SAVED_REGISTER_NUM];
     /* Student's code goes here (Preemptive Scheduler | System Call). */
+    ulonglong turn_time;
+    ulonglong resp_time;
+    ulonglong acpu_time;
+    uint nint;
 
-    /* Add new fields for lifecycle statistics, MLFQ or process sleep. */
-
+    uint mlfq_priority;
+    int remaining_time;
     /* Student's code ends here. */
 };
 

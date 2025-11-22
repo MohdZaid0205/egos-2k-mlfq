@@ -29,9 +29,12 @@ int proc_alloc() {
             proc_set[i].pid    = ++curr_pid;
             proc_set[i].status = PROC_LOADING;
             /* Student's code goes here (Preemptive Scheduler | System Call). */
+            proc_set[i].turn_time = 0;
+            proc_set[i].resp_time = 0;
+            proc_set[i].acpu_time = 0;
 
-            /* Initialization of lifecycle statistics, MLFQ or process sleep. */
-
+            proc_set[i].mlfq_priority = 0;
+            proc_set[i].remaining_time= MLFQ_LEVEL_RUNTIME(0);
             /* Student's code ends here. */
             return curr_pid;
         }
