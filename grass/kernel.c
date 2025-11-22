@@ -106,6 +106,13 @@ static void proc_yield() {
     
     for (uint i = 1; i <= MAX_NPROCESS; i++){
         struct process* p = &proc_set[i];
+        if (p->status == PROC_UNUSED) continue;
+        if (p->status == PROC_PENDING_SYSCALL) proc_try_syscall(p);
+    }
+
+    for (uint i = 1; i <= MAX_NPROCESS; i++){
+        struct process* p = &proc_set[i];
+        if (p->status == PROC_UNUSED) continue;
         if (p->status == PROC_PENDING_SYSCALL) proc_try_syscall(p);
 
         if (p->status == PROC_READY || p->status == PROC_RUNNABLE){
@@ -148,7 +155,6 @@ static void proc_yield() {
         FATAL("proc_yield: no process to run on core %d", core_in_kernel);
     }
     /* Student's code ends here. */
-    INFO("found index=%d\n", next_idx);
 
     curr_proc_idx = next_idx;
     earth->mmu_switch(curr_pid);
