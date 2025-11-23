@@ -55,7 +55,8 @@ void proc_free(int pid) {
     for (int i = 0; i < MAX_NPROCESS+1; i++)
         if (proc_set[i].pid == pid){
             proc_set[i].turn_time = mtime_get() - proc_set[i].turn_time;
-            printf("[PID]=%d nint=%d bint=%d prem=%d lnum=%d turn=%dms resp=%dms acpu=%dms\n", 
+            printf("\033[38;2;255;50;50m[END]\033[0m PID=%d nint=%d "
+                   "bint=%d prem=%d lnum=%d turn=%dms resp=%dms acpu=%dms\n", 
                    proc_set[i].pid, proc_set[i].nint,
                    proc_set[i].bint-proc_set[i].nint,
                    proc_set[i].prem,proc_set[i].lnum,
